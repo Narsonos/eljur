@@ -208,8 +208,8 @@ def mystats(request):
 			numeric_marks = Mark.objects.filter(teacher=current_user,subject=subject,student=student, value__in=['5','4','3','2']).values('value')
 			numeric_marks = [int(mark.get('value')) for mark in numeric_marks]
 
-			percent_attended = round(N_attended / total,2)
-			percent_ill = round(N_ill / total,2)
+			percent_attended = round(N_attended / total,2)*100
+			percent_ill = round(N_ill / total,2)*100
 
 			if len(numeric_marks)>0:
 				average_score = round(sum(numeric_marks)/len(numeric_marks),2)

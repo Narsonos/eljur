@@ -8,7 +8,7 @@
 	{% load static %}
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-	<link rel="stylesheet" href="{% static 'teachers_common.css' %}"/>
+	<link rel="stylesheet" href="{% static 'students_common.css' %}"/>
 </head>
 
 <body class='gradient-custom vh-100'>
@@ -24,19 +24,13 @@
 					<hr>
 					<ul class="nav nav-pills mx-2 flex-column mb-auto">
       					<li class="nav-item">
-        					<a href="{% url 'teacher_dashboard' %}" class="nav-link link-dark">
+        					<a href="{% url 'student_dashboard' %}" class="nav-link link-dark">
           						<i class="bi bi-check2-square mx-2"></i>
           						Отметки
         					</a>
       					</li>
       					<li>
-        					<a href="{% url 'teacher_mystudents' %}" class="nav-link link-dark">
-          						<i class="bi bi-person mx-2"></i>
-          						Ученики
-        					</a>
-      					</li>
-      					<li>
-        					<a href="{% url 'teacher_mystats' %}" class="nav-link active" aria-current="page">
+        					<a href="{% url 'student_mystats' %}" class="nav-link active" aria-current="page">
           						<i class="bi bi-clipboard2-data mx-2"></i>
           						Статистика
         					</a>
@@ -53,38 +47,16 @@
 
 			<div class='col-9'>
 				<div class='main-panel h-100 bg-light rounded'>
-					<p class='fs-3 pt-3 text-center fw-bold text-theme'>Преподаватель: {{ request.user.fio }}
+					<p class='fs-3 pt-3 text-center fw-bold text-theme'>Студент: {{ request.user.fio }}
 					</p>
 					<hr>
 
 
 					<div class ='container my-3 pb-3'>
-						<form id='form-table-controls' name='form-table-controls' method='post' action='{% url "teacher_mystats" %}'>
-							{% csrf_token %}
-						</form>
-
-						<div class='row justify-content-between'>
-
-							<div class="col-md-6">
-								<p class="fs-2 fw-semibold text-theme fst-italic text-center mt-3"><i class="bi bi-clipboard2-data mx-2"></i>Статистика учеников</p>
+						<div class='row justify-content-center'>
+							<div class="col-md-12">
+								<p class="fs-2 fw-semibold text-theme fst-italic text-center mt-3"><i class="bi bi-clipboard2-data mx-2"></i>Статистика по предметам</p>
 							</div>
-
-							<div class='col-3'>
-								<label class="form-label">Выбрать предмет</label>
-								<select name='given_subject' form='form-table-controls' class="form-select" aria-label="Default select example" onchange="$('#form-table-controls').submit()">
-  									<option value="{% if selected_subject %}{{ selected_subject }}{% endif %}"selected>
-  									{% if selected_subject %}
-  										{{ selected_subject }}
-  									{% else %}
-  										Выберите предмет
-  									{% endif %}
-  									</option>
-  									{% for subject in my_subjects %}
-  										<option value="{{ subject }}">{{ subject }}</option>
-  									{% endfor %}
-									</select>
-							</div>
-
 						</div>
 					</div>
 
@@ -93,21 +65,21 @@
 						<table class='table'>
 							<thead>
 								<tr>
-									<th scope="col">Студент</th>
+									<th scope="col">Предмет</th>
 									<th scope="col" class="text-center">Посещаемость (%)</th>
 									<th scope="col" class="text-center">Болел (%)</th>
 									<th scope="col" class="text-center">Средний балл</th>
 								</tr>
 							</thead>
 							<tbody>
-								{% for fio,attended,ill,average in table %}
+								{% for subject,teacher,attended,ill,average in table %}
 									<tr>
 										<td scope="row" class="align-middle">
-											<span class='fio-field fs-6 fw-bold'>{{ fio }}</span>
+											<span class='subj-field fs-6 fw-bold'>{{ subject }}</span>
 											<br>
-											<span class='subject-field fst-italic'>{{ subject.name }}</span>
+											<span class='teacher-field fst-italic'>{{ teacher }}</span>
 										</td>
-										<td class="cell-hover border align-middle text-center fs-5 fw-bold">{{ attended }}</td>
+										<td class="cell-hover border align-middle text-center fs-5 fw-bold">{{ attended }}
 										<td class="cell-hover border align-middle text-center fs-5 fw-bold">{{ ill }}</td>
 										<td class="cell-hover border align-middle text-center fs-5 fw-bold">{{ average }}</td>
 									</tr>
@@ -116,7 +88,7 @@
 						</table>
 						{% if not table %}
 						<p class='fs-3 pt-3 text-center fst-italic text-theme'>
-							Сначала требуется добавить учеников...
+							Данные отсутствуют - журнал пуст!
 						</p>
 						{% endif %}
 					</div>
