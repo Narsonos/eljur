@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Ученики</title>
+	{% load bootstrap5 %}
+	{% bootstrap_css %}
+	{% bootstrap_javascript %}
+	{% load static %}
+	<link rel="stylesheet" href="{% static 'teachers_common.css' %}"/>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body class='gradient-custom vh-100'>
+
+	<div class='container my-3'>
+		<div class='row'>
+
+			<div class='col-md-3'>
+				<div class="py-3 side-menu bg-light shadow-lg rounded">
+					<div class='mt-2 mx-2 bg-theme rounded-pill'>
+						<p class='fs-5 text-light fw-bold px-1 mx-2 py-2 text-center'><i class="fs-4 bi bi-book px-2 py-1"></i>Электронный журнал</p>
+					</div>
+					<hr>
+					<ul class="nav nav-pills mx-2 flex-column mb-auto">
+      					<li class="nav-item">
+        					<a href="{% url 'teacher_dashboard' %}" class="nav-link link-dark" aria-current="page">
+          						<i class="bi bi-check2-square mx-2"></i>
+          						Отметки
+        					</a>
+      					</li>
+      					<li>
+        					<a href="{% url 'teacher_mystudents' %}" class="nav-link active">
+          						<i class="bi bi-person mx-2"></i>
+          						Ученики
+        					</a>
+      					</li>
+      					<li>
+        					<a href="{% url 'teacher_mystats' %}" class="nav-link link-dark">
+          						<i class="bi bi-clipboard2-data mx-2"></i>
+          						Статистика
+        					</a>
+      					</li>
+      					<li>
+        					<a href="{% url 'logout' %}" class="nav-link link-dark">
+          						<i class="bi bi-door-open mx-2"></i>
+          						Выйти
+        					</a>
+      					</li>
+    				</ul>
+				</div>
+			</div>
+
+			<div class='col-9'>
+				<div class='main-panel h-100 bg-light rounded'>
+					<p class='fs-3 pt-3 text-center fw-bold text-theme'>Преподаватель: {{ request.user.fio }}
+					</p>
+					<hr>
+					<div class ='container pb-1'>
+						<div class='row justify-content-center'>
+							<div class="col-md-6">
+								<p class="fs-2 fw-semibold text-theme fst-italic text-center mt-2"><i class="bi bi-person mx-2"></i>Мои ученики</p>
+							</div>
+						</div>
+					</div>
+					<div class='table-container container'>
+						<table class='table table-hover'>
+							<thead>
+								<tr>
+									<th scope="col">#</th>
+									<th scope="col">Ученик</th>
+									<th scope="col">Предмет</th>
+									<th scope="col" class="text-end">
+										<button type='button' class='btn btn-danger bg-theme' onclick="$('#addstudmodal').modal('show')">Добавить</button>
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+									{% for i,relation in my_students %}
+									<tr>
+										<th scope="row" class="align-middle">{{ i }}</th>
+										<td class="align-middle">{{ relation.student.fio }}</td>
+										<td class="align-middle">{{ relation.subject.name }}</td>
+										<td class='text-end'>
+											<button class='btn btn-alert bg-theme text-light' onclick="prepare_del_modal('{{relation.student.username}}','{{relation.student.fio}}','{{ relation.subject.name }}')">
+												<i class="bi bi-trash"></i>
+											</button>
+										</td>
+									</tr>
+									{% endfor %}
+
+							</tbody>
+						</table>
+						{% if not my_students %}
+						<p class='fs-3 pt-3 text-center fst-italic text-theme'>
+							Чтобы добавить ученика, нажмите кнопку "Добавить"<br>
+							в правом верхнем углу таблицы!
+						</p>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+
+
+<!-- Modals -->
+<div class="modal fade" id="addstudmodal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addModalLongTitle">Добавить ученика</h5>
+      </div>
+      <div class="modal-body">
+
+     	<form id='stud-add-form' name='stud-add-form' method='post' action="{% url 'teacher_add_student'%}">
+     		{% csrf_token %}
+
+        	<label for="StudentsDataList" class="form-label">Введите ФИО студента</label>
+			<input form='stud-add-form' name='student_fio' class="form-control mb-4" list="dlOptions" id="StudentsDataList" placeholder="Начните ввод для поиска...">
+			<datalist id="dlOptions">
+				{% for student in all_students %}
+					<option value='{{ student }}'>
+				{% endfor %}
+			</datalist>
+
+			<label for="SubjectsDataList" class="form-label">Введите название дисциплины/предмета</label>
+			<input form='stud-add-form' name='subject' class="form-control" list="subj-dl-Options" id="SubjectsDataList" placeholder="Начните ввод для поиска...">
+			<datalist id="subj-dl-Options">
+				{% for subject in all_subjects %}
+					<option value='{{ subject.name }}'>
+				{% endfor %}
+			</datalist>
+
+		</form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="$('#addstudmodal').modal('hide')">Закрыть</button>
+        <button form='stud-add-form' type="submit" class="btn btn-alert text-light bg-theme">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="delstudmodal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="delModalLongTitle">Удалить ученика</h5>
+      </div>
+      <div class="modal-body">
+
+     	<form id='stud-del-form' name='stud-del-form' method='post' action="{% url 'teacher_del_student'%}">
+     		{% csrf_token %}
+     		<p class="fw-bold">Вы действительно хотите удалить запись?</p>
+     		<p class='fw-bold'>Имя: <span id="del-stud-name" class='fst-italic fw-normal'></span></p>
+     		<p class='fw-bold'>Предмет: <span id="del-stud-subj" class='fst-italic fw-normal'></span></p>
+
+     		<input id='del-form-subj-field' type='hidden' name='subject'>
+     		<input id='del-form-stud-field' type='hidden' name='student'>
+		</form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="$('#delstudmodal').modal('hide')">Закрыть</button>
+        <button form='stud-del-form' type="submit" class="btn btn-alert text-light bg-theme">Удалить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+
+
+<script>
+//substitute values in delete student modal
+//according to selected button
+
+function prepare_del_modal(username,fio,subject) {
+	console.log(fio,subject)
+	$('#del-stud-name')[0].innerHTML = fio;
+	$('#del-stud-subj')[0].innerHTML = subject;
+	$('#del-form-subj-field')[0].value = subject;
+	$('#del-form-stud-field')[0].value = username;
+	$('#delstudmodal').modal('show')
+
+
+	
+}
+
+</script>

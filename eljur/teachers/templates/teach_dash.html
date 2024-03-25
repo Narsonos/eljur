@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Журнал</title>
+	{% load bootstrap5 %}
+	{% bootstrap_css %}
+	{% bootstrap_javascript %}
+	{% load static %}
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+	<link rel="stylesheet" href="{% static 'teachers_common.css' %}"/>
+</head>
+
+<body class='gradient-custom vh-100'>
+
+	<div class='container my-3'>
+		<div class='row'>
+
+			<div class='col-md-3'>
+				<div class="py-3 side-menu bg-light shadow-lg rounded">
+					<div class='mt-2 mx-2 bg-theme rounded-pill'>
+						<p class='fs-5 text-light fw-bold px-1 mx-2 py-2 text-center'><i class="fs-4 bi bi-book px-2 py-1"></i>Электронный журнал</p>
+					</div>
+					<hr>
+					<ul class="nav nav-pills mx-2 flex-column mb-auto">
+      					<li class="nav-item">
+        					<a href="{% url 'teacher_dashboard' %}" class="nav-link active" aria-current="page">
+          						<i class="bi bi-check2-square mx-2"></i>
+          						Отметки
+        					</a>
+      					</li>
+      					<li>
+        					<a href="{% url 'teacher_mystudents' %}" class="nav-link link-dark">
+          						<i class="bi bi-person mx-2"></i>
+          						Ученики
+        					</a>
+      					</li>
+      					<li>
+        					<a href="{% url 'teacher_mystats' %}" class="nav-link link-dark">
+          						<i class="bi bi-clipboard2-data mx-2"></i>
+          						Статистика
+        					</a>
+      					</li>
+      					<li>
+        					<a href="{% url 'logout' %}" class="nav-link link-dark">
+          						<i class="bi bi-door-open mx-2"></i>
+          						Выйти
+        					</a>
+      					</li>
+    				</ul>
+				</div>
+			</div>
+
+			<div class='col-9'>
+				<div class='main-panel h-100 bg-light rounded'>
+					<p class='fs-3 pt-3 text-center fw-bold text-theme'>
+						Преподаватель: {{ request.user.fio }}
+					</p>
+					<hr>
+
+
+					<div class ='container my-3 pb-3'>
+						<form id='form-table-controls' name='form-table-controls' method='post' action='{% url "teacher_dashboard" %}'>
+							{% csrf_token %}
+						</form>
+
+						<div class='row justify-content-between'>
+							<div class='col-3'>
+								<label class="form-label">Выбрать предмет</label>
+								<select name='given_subject' form='form-table-controls' class="form-select" aria-label="Default select example" onchange="$('#form-table-controls').submit()">
+  									<option value="{% if selected_subject %}{{ selected_subject }}{% endif %}"selected>
+  									{% if selected_subject %}
+  										{{ selected_subject }}
+  									{% else %}
+  										Выберите предмет
+  									{% endif %}
+  									</option>
+  									{% for subject in my_subjects %}
+  										<option value="{{ subject }}">{{ subject }}</option>
+  									{% endfor %}
+									</select>
+							</div>
+
+							<div class="col-md-6">
+								<p class="fs-2 fw-semibold text-theme fst-italic text-center mt-3"><i class="bi bi-check2-square px-2"></i>Журнал оценок</p>
+							</div>
+
+							<div class="col-sm-3">
+								<label class="form-label">Выбрать неделю</label>
+								<input form='form-table-controls' name='given_date' type="date" class='form-control' placeholder='Выберите неделю' onchange="$('#form-table-controls').submit()" {% if selected_date %} value='{{ selected_date }}' {% endif %}>
+							</div>
+
+						</div>
+					</div>
+
+
+					<div class="mark-table-container container rounded">
+						<table class='table'>
+							<thead>
+								<tr>
+									<th scope="col">Студент</th>
+									{% for date,weekday,today,fulldate in dates_and_weekdays %}
+										<th id="{{ fulldate }}" scope="col" class='text-center {% if today %} bg-theme rounded text-light {% endif %}'>{{ date }}<br>{{ weekday }}
+										</th>
+									{% endfor %}
+								</tr>
+							</thead>
+							<tbody>
+								{% for relation,marks in table %}
+									<tr>
+									<td scope="row" class="align-middle"><span class='fio-field fs-6 fw-bold'>{{ relation.student.fio }}</span><br><span class='subject-field fst-italic'>{{ relation.subject.name }}</span></td>
+									{% for mark in marks %}
+										{% if mark %}
+										<td class="cell-hover border align-middle text-center fs-5 fw-bold">{{ mark.value }}</td>
+										{% else %}
+										<td class="cell-hover border align-middle text-center fs-5 fw-bold">-</td>
+										{% endif %}
+									{% endfor %}
+									</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+						{% if not table %}
+						<p class='fs-3 pt-3 text-center fst-italic text-theme'>
+							Сначала требуется добавить учеников...
+						</p>
+						{% endif %}
+					</div>
+			</div>
+		</div>
+
+	</div>
+
+
+<!-- Modals -->
+<div class="modal fade" id="setMarkModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="setMarkModalTitle">Выберите отметку</h5>
+      </div>
+      <div class="modal-body">
+
+     	<form id='set-mark-form' name='set-mark-form' method='post' action="{% url 'teacher_set_mark'%}">
+     		{% csrf_token %}
+     		<input name='fio' type='hidden'>
+     		<input name='date' type='hidden'>
+     		<input name='subject' type='hidden'>
+
+     		<select name='mark' class="form-select" aria-label="Выберите отметку">
+  				<option value="-">- (Нет отметки)</option>
+  				<option value="Н">Н (Не присутствовал)</option>
+  				<option value="Б">Б (Болел)</option>
+  				<option value="П">П (Присутствовал)</option>
+  				<option value="2">2</option>
+  				<option value="3">3</option>
+  				<option value="4">4</option>
+  				<option value="5">5</option>
+			</select>
+
+		</form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="$('#setMarkModal').modal('hide')">Закрыть</button>
+        <button form='set-mark-form' type="submit" class="btn btn-alert text-light bg-theme">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+
+<script>
+//substitute values in mark modal
+//according to the selected cell
+
+$('.cell-hover').click(function () {
+	let $cell = $(this);
+	let date = $cell.closest('table').find('th').eq($cell.index()).attr('id');
+	console.log(date);
+	let fio = $cell.closest('tr').find('.fio-field').text();
+	let subject = $cell.closest('tr').find('.subject-field').text();
+	console.log(fio, subject)
+
+	$('input[name="fio"]').val(fio);
+	$('input[name="date"]').val(date);
+	$('input[name="subject"]').val(subject);
+	$('#setMarkModal').modal('show')
+});
+</script>

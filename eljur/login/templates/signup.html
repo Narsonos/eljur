@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Авторизация</title>
+	{% load bootstrap5 %}
+	{% bootstrap_css %}
+	{% bootstrap_javascript %}
+	{% load static %}
+	<link rel="stylesheet" href={% static 'common.css' %}/>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+</head>
+
+<script>
+  function navigate (direction) {
+
+    var page1 = document.getElementById('page1');
+    var page2 = document.getElementById('page2');
+    if (direction=='next') {
+      console.log('switch to page2')
+      page1.classList.add('d-none');
+      page2.classList.remove('d-none');
+    }
+    else {
+      console.log('switch to page1')
+      page1.classList.remove('d-none');
+      page2.classList.add('d-none');
+    }
+
+  }
+</script>
+
+<body>
+<section class="vh-100 gradient-custom">
+  <div class="container py-5 h-100">
+    <div class="row d-flex justify-content-center align-items-center h-100">
+      <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+        <div class="card bg-dark text-white" style="border-radius: 1rem;">
+          <div class="card-body p-5 text-center">
+
+            <div class="mb-md-5 mt-md-4 pb-5">
+
+            <form id='signup-form' name='signup-form' method='post' action='#'>
+              {% csrf_token %}
+            </form>
+
+              <h2 class="fw-bold mb-2 text-uppercase">Создать аккаунт</h2>
+              <div id="page1">
+                <p class="text-white-50 mb-5">Выберите тип аккаунта и введите ФИО!</p>
+
+                <div class='checkbox-container mb-1'>
+                  <div class="form-check">
+                    <label class="form-check-label fs-3" for="flexRadioDefault1">
+                    Студент
+                    <input form='signup-form' class="form-check-input" type="radio" name="usertype" value='student' id="usertype1" checked>
+                    </label>
+                  </div>
+
+                  <div class="form-check">
+                    <label class="form-check-label fs-3" for="flexRadioDefault2">
+                      <input form='signup-form' class="form-check-input" type="radio" name="usertype" value='teacher' id="usertype2">
+                      Преподаватель
+                    </label>
+                  </div>
+
+                  <div class="form-outline form-white mt-4 mb-2">
+                    <input name='fio' form='signup-form' type="text" id="fio-field" class="text-center form-control form-control-lg bg-dark text-light" />
+                    <label class="form-label" for="fio-field">ФИО</label>
+                  </div>
+
+
+                </div>
+                  <button class="btn mt-5 btn-outline-light btn-lg px-5" onclick="navigate('next')">Далее</button>
+              </div>
+
+              <div id='page2' class='d-none'>
+                <p class="text-white-50 mb-5">Заполните поля ниже!</p>
+                <div class="form-outline form-white mb-4">
+                  <input name='username' form='signup-form' type="email" id="username-field" class="form-control form-control-lg bg-dark text-light" />
+                  <label class="form-label" for="username-field">Email</label>
+                </div>
+
+                <div class="form-outline form-white mb-4">
+                  <input name='password' form='signup-form' type="password" id="password-field" class="form-control form-control-lg bg-dark text-light" />
+                 <label class="form-label" for="password-field">Новый пароль</label>
+                </div>
+
+                <div class="form-outline form-white mb-4">
+                  <input name='pass_conf' form='signup-form' type="password" id="pass-conf-field" class="form-control form-control-lg bg-dark text-light" />
+                  <label class="form-label" for="pass-conf-field">Потверждение пароля</label>
+                </div>
+
+                <button class="btn btn-outline-light btn-lg px-5" onclick="navigate('back')">Назад</button>
+
+                <button form='signup-form' class="btn btn-outline-light btn-lg px-5" type="submit">Отправить</button>
+              </div>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+
+<script>
+       $(document).ready(function () {
+          // отслеживаем событие отправки формы
+          $('#signup-form').submit(function (e) {
+
+              e.preventDefault();
+              // создаем AJAX-вызов
+              $.ajax({
+
+                  data: $(this).serialize(), // получаяем данные формы
+                  url: "{% url 'validate_user' %}",
+                  type:'POST',
+                  // если успешно, то
+                  success: function (response) {
+                      var allfalse = Object.keys(response).every(function(k){ return response[k] === false });
+                      console.log(response)
+                      $('#username-field')[0].classList.add('is-valid');
+                      $('#password-field')[0].classList.add('is-valid');
+                      $('#pass-conf-field')[0].classList.add('is-valid');
+                      if (response.fio_is_empty) {
+                        alert('Поле ФИО незаполнено!')
+                      }
+
+                      if (response.username_is_taken) {
+                        $('#username-field')[0].classList.remove('is-valid');
+                        $('#username-field')[0].classList.add('is-invalid');
+                        alert('Указанный пользователь уже зарегистрирован.')
+                      }
+                      if (response.password_is_small) {
+                        $('#password-field')[0].classList.remove('is-valid');
+                        $('#password-field')[0].classList.add('is-invalid');
+                        alert('Длина пароля должна быть больше 6 симв.')
+                      }
+                      if (response.password_mismatch) {
+                        $('#pass-conf-field')[0].classList.remove('is-valid');
+                        $('#pass-conf-field')[0].classList.add('is-invalid');
+                        alert('Пароли не совпадают!')
+                      }
+                      if (allfalse) {
+                        console.log('here')
+                        alert('Пользователь успешно создан')
+                        window.location.href = "{% url 'login' %}"
+
+                      }
+                  },
+                  // если ошибка, то
+                  error: function (response) {
+                      // предупредим об ошибке
+                      console.log(response.responseJSON.errors)
+                  }
+              });
+              return false;
+          })
+      }) 
+</script>
+

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Авторизация</title>
+	{% load bootstrap5 %}
+	{% bootstrap_css %}
+	{% bootstrap_javascript %}
+	{% load static %}
+	<link rel="stylesheet" href={% static 'common.css' %}/>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+
+<body>
+<section class="vh-100 gradient-custom">
+  <div class="container py-5 h-100">
+    <div class="row d-flex justify-content-center align-items-center h-100">
+      <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+        <div class="card bg-dark text-white" style="border-radius: 1rem;">
+          <div class="card-body p-5 text-center">
+
+            <div class="mb-md-5 mt-md-4 pb-5">
+
+            <form id='login-form', name='login-form' method='post' action="{% url 'login_action' %}">
+            	{% csrf_token %}
+            </form>
+
+              <h2 class="fw-bold mb-2 text-uppercase">Электронынй журнал</h2>
+              <p id="sign-up-hint" class="text-white-50 mb-5">Введите логин и пароль для входа!</p>
+
+              <div class="form-outline form-white mb-4">
+                <input form='login-form' name='username' type="email" id="username-field" class="form-control form-control-lg bg-dark text-light" />
+                <label class="form-label" for="username-field">Email</label>
+              </div>
+
+              <div class="form-outline form-white mb-4">
+                <input form='login-form' name='password' type="password" id="password-field" class="form-control form-control-lg bg-dark text-light" />
+                <label class="form-label" for="password-field">Пароль</label>
+              </div>
+
+              <p class="small mb-5 pb-lg-2"><a class="text-white-50" href="#!">Забыли пароль?</a></p>
+
+              <button form='login-form' class="btn btn-outline-light btn-lg px-5" type="submit">Войти</button>
+
+
+            </div>
+
+            <div>
+              <p class="mb-0">Не зарегистрированы? <a href="{% url 'signup' %}" class="text-white-50 fw-bold">Создать аккаунт</a>
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+
+<script>
+       $(document).ready(function () {
+          // отслеживаем событие отправки формы
+          $('#login-form').submit(function (e) {
+
+              e.preventDefault();
+              // создаем AJAX-вызов
+              $.ajax({
+
+                  data: $(this).serialize(), // получаяем данные формы
+                  url: "{% url 'validate_login' %}",
+                  type:'POST',
+                  // если успешно, то
+                  success: function (response) {
+                      var allfalse = Object.keys(response).every(function(k){ return response[k] === false });
+                      console.log(response)
+                      $('#username-field')[0].classList.add('is-valid');
+                      $('#password-field')[0].classList.add('is-valid');
+
+                      if (response.username_invalid) {
+                        $('#username-field')[0].classList.remove('is-valid');
+                        $('#username-field')[0].classList.add('is-invalid');
+                      }
+                      if (response.password_invalid) {
+                        $('#password-field')[0].classList.remove('is-valid');
+                        $('#password-field')[0].classList.add('is-invalid');
+                      }
+
+
+                      if (allfalse) {
+                        window.location.href="{% url 'login_action' %}"
+
+                      }
+                  },
+                  // если ошибка, то
+                  error: function (response) {
+                      // предупредим об ошибке
+                      console.log(response.responseJSON.errors)
+                  }
+              });
+              return false;
+          })
+      }) 
+</script>

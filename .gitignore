@@ -1,0 +1,9 @@
+eljur/eljur/__pycache__/
+eljur/__pycache__/
+eljur/login/__pycache__/
+eljur/login/migrations
+eljur/students/__pycache__/
+eljur/students/migrations
+eljur/teachers/__pycache__/
+eljur/teachers/migrations
+venv
