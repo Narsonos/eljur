@@ -8,4 +8,4 @@ Stack:
 - PostgreSQL
 
 #### Notes
-- Before use edit settings.py and set correct database credentials.
+- Before use edit eljur/eljur/settings.py and set correct database credentials.
